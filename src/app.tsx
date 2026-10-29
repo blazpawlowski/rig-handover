@@ -20,6 +20,13 @@ export function createApp(config: RigConfig = loadConfig()) {
     ),
   );
 
+  // Same reader, same rows, same order as the page (ADR 0001).
+  app.get('/api/digest/:night', (c) => {
+    const night = c.req.param('night');
+    const digest = readNight(config.runsDir, night);
+    return digest ? c.json(digest) : c.json({ error: 'no run log for this night', night }, 404);
+  });
+
   app.get('/digest/:night', (c) => {
     const night = c.req.param('night');
     const digest = readNight(config.runsDir, night);
