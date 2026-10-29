@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { DigestNight, DigestRow, ReadNight, RunLine } from './types.js';
+import type { DigestNight, DigestRow, ReadNight, RunLine, RunStatus } from './types.js';
 
 const NIGHT = /^\d{4}-\d{2}-\d{2}$/;
 const STATUSES = new Set(['ok', 'retry', 'fail']);
@@ -57,14 +57,31 @@ export function digest(night: string, text: string): DigestNight {
   return { night, rows, badLines };
 }
 
-export const readNight: ReadNight = (runsDir, night) => {
+function readLog(runsDir: string, night: string): string | null {
   if (!NIGHT.test(night)) return null;
-  let text: string;
   try {
-    text = readFileSync(join(runsDir, `${night}.jsonl`), 'utf8');
+    return readFileSync(join(runsDir, `${night}.jsonl`), 'utf8');
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw e;
   }
-  return digest(night, text);
+}
+
+export const readNight: ReadNight = (runsDir, night) => {
+  const text = readLog(runsDir, night);
+  return text === null ? null : digest(night, text);
 };
+
+export type StatusCounts = Record<RunStatus, number>;
+
+// Lines per status for the night, for the status board. Bad lines aren't counted here.
+export function countNight(runsDir: string, night: string): StatusCounts | null {
+  const text = readLog(runsDir, night);
+  if (text === null) return null;
+  const counts: StatusCounts = { ok: 0, retry: 0, fail: 0 };
+  for (const line of text.split(/\r?\n/)) {
+    const run = line.trim() === '' ? null : parseLine(line);
+    if (run) counts[run.status]++;
+  }
+  return counts;
+}
