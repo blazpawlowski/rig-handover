@@ -15,11 +15,14 @@ in a shell this agent can run.
    One issue per unit of work.
 3. **Stop and show the table to the human.** Publish nothing until they approve it.
 4. Ask the human what every issue here must carry (fields, labels, wording), unless it is
-   already written down in this session or in the repo.
-5. Create each issue in dependency order, so blocked-by can cite real numbers:
+   already written down in this session or in the repo. This repo writes it down in AGENTS.md
+   (How work moves here, step 2): label `plan:<plan>`, body opening with `Source: plan.md § <n>`.
+5. Create each issue in dependency order, so blocked-by can cite real numbers. Create the label
+   first if it doesn't exist (`gh label list`):
 
    ```sh
-   gh issue create --title "<title>" --body-file <tmp.md>
+   gh label create "plan:<plan>"
+   gh issue create --title "<title>" --label "plan:<plan>" --body-file <tmp.md>
    ```
 
 6. Record every issue URL from gh's output (not from memory) and reply with the list.
